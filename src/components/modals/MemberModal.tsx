@@ -33,7 +33,7 @@ export function MemberModal({ isOpen, onClose, onSave, member }: MemberModalProp
     phone: "",
     borrowlimit: 5,
     date_registered: new Date().toISOString().split("T")[0],
-    status: "Active",
+    status: "active",
   });
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export function MemberModal({ isOpen, onClose, onSave, member }: MemberModalProp
         phone: "",
         borrowlimit: 5,
         date_registered: new Date().toISOString().split("T")[0],
-        status: "Active",
+        status: "active",
       });
     }
   }, [member, isOpen]);
@@ -139,9 +139,8 @@ export function MemberModal({ isOpen, onClose, onSave, member }: MemberModalProp
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Suspended">Suspended</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="active">สมาชิกสามารถใช้งานได้</SelectItem>
+                    <SelectItem value="inactive">สมาชิกถูกระงับ / ไม่สามารถยืมได้</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

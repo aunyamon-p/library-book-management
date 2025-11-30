@@ -16,7 +16,7 @@ const mockMembers = [
     phone: "+1-555-0123",
     borrowlimit: 5,
     date_registered: "2023-01-15",
-    status: "Active",
+    status: "active",
   },
   {
     user_id: 2,
@@ -27,7 +27,7 @@ const mockMembers = [
     phone: "+1-555-0124",
     borrowlimit: 5,
     date_registered: "2023-02-20",
-    status: "Active",
+    status: "active",
   },
   {
     user_id: 3,
@@ -38,7 +38,7 @@ const mockMembers = [
     phone: "+1-555-0125",
     borrowlimit: 3,
     date_registered: "2023-03-10",
-    status: "Suspended",
+    status: "inactive",
   },
 ];
 
@@ -135,7 +135,7 @@ export default function Members() {
                     <td className="py-3">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                          member.status === "Active"
+                          member.status === "active"
                             ? "bg-accent text-accent-foreground"
                             : "bg-destructive/10 text-destructive"
                         }`}

@@ -33,7 +33,7 @@ export function BookModal({ isOpen, onClose, onSave, book }: BookModalProps) {
     publish_year: new Date().getFullYear(),
     shelf: "",
     amount: 0,
-    status: "Available",
+    status: "available",
     category_name: "Fiction",
   });
 
@@ -49,7 +49,7 @@ export function BookModal({ isOpen, onClose, onSave, book }: BookModalProps) {
         publish_year: new Date().getFullYear(),
         shelf: "",
         amount: 0,
-        status: "Available",
+        status: "available",
         category_name: "Fiction",
       });
     }
@@ -167,8 +167,9 @@ export function BookModal({ isOpen, onClose, onSave, book }: BookModalProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Available">Available</SelectItem>
-                    <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                    <SelectItem value="available">หนังสือพร้อมให้ยืม</SelectItem>
+                    <SelectItem value="borrowed">หนังสือถูกยืมอยู่</SelectItem>
+                    <SelectItem value="lost">หนังสือสูญหายหรือไม่พร้อมใช้งาน</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

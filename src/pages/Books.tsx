@@ -23,7 +23,7 @@ const mockBooks = [
     publish_year: 1960,
     shelf: "A-12",
     amount: 5,
-    status: "Available",
+    status: "available",
     category_name: "Fiction",
   },
   {
@@ -35,7 +35,7 @@ const mockBooks = [
     publish_year: 1949,
     shelf: "B-08",
     amount: 3,
-    status: "Available",
+    status: "borrowed",
     category_name: "Science Fiction",
   },
   {
@@ -47,7 +47,7 @@ const mockBooks = [
     publish_year: 1925,
     shelf: "A-15",
     amount: 0,
-    status: "Out of Stock",
+    status: "lost",
     category_name: "Fiction",
   },
 ];
@@ -165,8 +165,10 @@ export default function Books() {
                     <td className="py-3">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                          book.status === "Available"
+                          book.status === "available"
                             ? "bg-accent text-accent-foreground"
+                            : book.status === "borrowed"
+                            ? "bg-secondary text-secondary-foreground"
                             : "bg-destructive/10 text-destructive"
                         }`}
                       >

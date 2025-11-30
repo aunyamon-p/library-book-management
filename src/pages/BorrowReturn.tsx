@@ -11,7 +11,7 @@ const mockRecords = [
     book_name: "The Great Gatsby",
     borrow_date: "2024-01-10",
     return_date: null,
-    status: "Borrowed",
+    status: "borrowed",
   },
   {
     borrow_id: 2,
@@ -19,7 +19,7 @@ const mockRecords = [
     book_name: "1984",
     borrow_date: "2024-01-08",
     return_date: "2024-01-22",
-    status: "Returned",
+    status: "returned",
   },
   {
     borrow_id: 3,
@@ -27,7 +27,7 @@ const mockRecords = [
     book_name: "To Kill a Mockingbird",
     borrow_date: "2023-12-20",
     return_date: null,
-    status: "Overdue",
+    status: "borrowed",
   },
 ];
 
@@ -38,7 +38,7 @@ export default function BorrowReturn() {
     setRecords(
       records.map((r) =>
         r.borrow_id === borrowId
-          ? { ...r, return_date: new Date().toISOString().split("T")[0], status: "Returned" }
+          ? { ...r, return_date: new Date().toISOString().split("T")[0], status: "returned" }
           : r
       )
     );
@@ -86,11 +86,9 @@ export default function BorrowReturn() {
                     <td className="py-3">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                          record.status === "Borrowed"
+                          record.status === "borrowed"
                             ? "bg-accent text-accent-foreground"
-                            : record.status === "Returned"
-                            ? "bg-secondary text-secondary-foreground"
-                            : "bg-destructive/10 text-destructive"
+                            : "bg-secondary text-secondary-foreground"
                         }`}
                       >
                         {record.status}
@@ -98,7 +96,7 @@ export default function BorrowReturn() {
                     </td>
                     <td className="py-3 text-right">
                       <div className="flex justify-end gap-2">
-                        {record.status === "Borrowed" || record.status === "Overdue" ? (
+                        {record.status === "borrowed" ? (
                           <Button variant="outline" size="sm" onClick={() => handleReturn(record.borrow_id)}>
                             Return Book
                           </Button>
