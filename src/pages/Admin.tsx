@@ -1,66 +1,73 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { AdminModal } from "@/components/modals/AdminModal";
 import { toast } from "sonner";
-
-const mockAdmins = [
-  {
-    admin_id: 1,
-    username: "admin01",
-    password: "****",
-    first_name: "John",
-    last_name: "Admin",
-    name: "John Admin",
-    role: "Super Admin",
-    created: "2023-01-01",
-  },
-  {
-    admin_id: 2,
-    username: "admin02",
-    password: "****",
-    first_name: "Sarah",
-    last_name: "Manager",
-    name: "Sarah Manager",
-    role: "Manager",
-    created: "2023-06-15",
-  },
-];
+import { getAdmins, addAdmin, updateAdmin, deleteAdmin } from "@/api/api";
 
 export default function Admin() {
-  const [admins, setAdmins] = useState(mockAdmins);
+  const [admins, setAdmins] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAdmin, setSelectedAdmin] = useState<typeof mockAdmins[0] | null>(null);
+  const [selectedAdmin, setSelectedAdmin] = useState<any | null>(null);
+
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
+
+  const fetchAdmins = async () => {
+    try {
+      const data = await getAdmins();
+      setAdmins(data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load admins");
+    }
+  };
 
   const handleAdd = () => {
     setSelectedAdmin(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (admin: typeof mockAdmins[0]) => {
+  const handleEdit = (admin) => {
     setSelectedAdmin(admin);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (adminId: number) => {
-    setAdmins(admins.filter((a) => a.admin_id !== adminId));
-    toast.success("Admin deleted successfully");
+  const handleSave = async (adminData) => {
+    try {
+      if (selectedAdmin) {
+        const updated = await updateAdmin(selectedAdmin.admin_id, adminData);
+        setAdmins(admins.map(a => a.admin_id === selectedAdmin.admin_id ? updated : a));
+        toast.success("Admin updated successfully");
+      } else {
+        const newAdmin = await addAdmin(adminData);
+        setAdmins([...admins, newAdmin]);
+        toast.success("Admin added successfully");
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save admin");
+    }
   };
 
-  const handleSave = (adminData: any) => {
-    if (selectedAdmin) {
-      setAdmins(admins.map((a) => (a.admin_id === selectedAdmin.admin_id ? { ...adminData, admin_id: a.admin_id } : a)));
-      toast.success("Admin updated successfully");
-    } else {
-      setAdmins([...admins, { ...adminData, admin_id: admins.length + 1 }]);
-      toast.success("Admin added successfully");
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this admin?")) return;
+    try {
+      await deleteAdmin(id);
+      setAdmins(admins.filter(a => a.admin_id !== id));
+      toast.success("Admin deleted successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete admin");
     }
-    setIsModalOpen(false);
   };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Admin Management</h1>
@@ -72,6 +79,7 @@ export default function Admin() {
         </Button>
       </div>
 
+      {/* Admin Table */}
       <Card className="shadow-custom">
         <CardHeader>
           <CardTitle>Admin List</CardTitle>
@@ -83,9 +91,9 @@ export default function Admin() {
                 <tr className="border-b border-border">
                   <th className="pb-3 text-left text-sm font-medium text-muted-foreground">ID</th>
                   <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Username</th>
+                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">First Name</th>
+                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Last Name</th>
                   <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Name</th>
-                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Role</th>
-                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Created</th>
                   <th className="pb-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
@@ -94,13 +102,9 @@ export default function Admin() {
                   <tr key={admin.admin_id} className="border-b border-border last:border-0">
                     <td className="py-3 text-sm text-foreground">{admin.admin_id}</td>
                     <td className="py-3 text-sm font-medium text-foreground">{admin.username}</td>
+                    <td className="py-3 text-sm text-foreground">{admin.first_name}</td>
+                    <td className="py-3 text-sm text-foreground">{admin.last_name}</td>
                     <td className="py-3 text-sm text-foreground">{admin.name}</td>
-                    <td className="py-3">
-                      <span className="inline-flex rounded-full bg-accent px-2 py-1 text-xs font-medium text-accent-foreground">
-                        {admin.role}
-                      </span>
-                    </td>
-                    <td className="py-3 text-sm text-muted-foreground">{admin.created}</td>
                     <td className="py-3 text-right">
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="sm" onClick={() => handleEdit(admin)}>
@@ -119,6 +123,7 @@ export default function Admin() {
         </CardContent>
       </Card>
 
+      {/* Admin Modal */}
       <AdminModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

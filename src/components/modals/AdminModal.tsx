@@ -107,22 +107,6 @@ export function AdminModal({ isOpen, onClose, onSave, admin }: AdminModalProps) 
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value) => setFormData({ ...formData, role: value })}
-              >
-                <SelectTrigger id="role">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Super Admin">Super Admin</SelectItem>
-                  <SelectItem value="Manager">Manager</SelectItem>
-                  <SelectItem value="Staff">Staff</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

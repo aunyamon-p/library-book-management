@@ -1,53 +1,56 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-
-const mockRecords = [
-  {
-    borrow_id: 1,
-    user_name: "John Doe",
-    book_name: "The Great Gatsby",
-    borrow_date: "2024-01-10",
-    return_date: null,
-    status: "borrowed",
-  },
-  {
-    borrow_id: 2,
-    user_name: "Jane Smith",
-    book_name: "1984",
-    borrow_date: "2024-01-08",
-    return_date: "2024-01-22",
-    status: "returned",
-  },
-  {
-    borrow_id: 3,
-    user_name: "Mike Johnson",
-    book_name: "To Kill a Mockingbird",
-    borrow_date: "2023-12-20",
-    return_date: null,
-    status: "borrowed",
-  },
-];
+import { getBorrows, updateBorrow, deleteBorrow } from "@/api/api";
 
 export default function BorrowReturn() {
-  const [records, setRecords] = useState(mockRecords);
+  const [records, setRecords] = useState<any[]>([]);
 
-  const handleReturn = (borrowId: number) => {
-    setRecords(
-      records.map((r) =>
-        r.borrow_id === borrowId
-          ? { ...r, return_date: new Date().toISOString().split("T")[0], status: "returned" }
-          : r
-      )
-    );
-    toast.success("Book returned successfully");
+  useEffect(() => {
+    fetchRecords();
+  }, []);
+
+  const fetchRecords = async () => {
+    try {
+      const data = await getBorrows();
+      setRecords(data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load borrow records");
+    }
   };
 
-  const handleDelete = (borrowId: number) => {
-    setRecords(records.filter((r) => r.borrow_id !== borrowId));
-    toast.success("Record deleted successfully");
+  const handleReturn = async (borrowId: number) => {
+    try {
+      const record = records.find(r => r.borrow_id === borrowId);
+      if (!record) return;
+
+      const updated = await updateBorrow(borrowId, {
+        ...record,
+        status: "returned",
+        due_date: new Date().toISOString() // หรือ field สำหรับ return date
+      });
+
+      setRecords(records.map(r => r.borrow_id === borrowId ? updated : r));
+      toast.success("Book returned successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to return book");
+    }
+  };
+
+  const handleDelete = async (borrowId: number) => {
+    if (!confirm("Are you sure you want to delete this record?")) return;
+    try {
+      await deleteBorrow(borrowId);
+      setRecords(records.filter(r => r.borrow_id !== borrowId));
+      toast.success("Record deleted successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete record");
+    }
   };
 
   return (
@@ -70,19 +73,19 @@ export default function BorrowReturn() {
                   <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Member Name</th>
                   <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Book Name</th>
                   <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Borrow Date</th>
-                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Return Date</th>
+                  <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Due Date</th>
                   <th className="pb-3 text-left text-sm font-medium text-muted-foreground">Status</th>
                   <th className="pb-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {records.map((record) => (
+                {records.map(record => (
                   <tr key={record.borrow_id} className="border-b border-border last:border-0">
                     <td className="py-3 text-sm text-foreground">BRW{String(record.borrow_id).padStart(3, "0")}</td>
-                    <td className="py-3 text-sm font-medium text-foreground">{record.user_name}</td>
+                    <td className="py-3 text-sm font-medium text-foreground">{record.member_name}</td>
                     <td className="py-3 text-sm text-foreground">{record.book_name}</td>
-                    <td className="py-3 text-sm text-muted-foreground">{record.borrow_date}</td>
-                    <td className="py-3 text-sm text-muted-foreground">{record.return_date || "-"}</td>
+                    <td className="py-3 text-sm text-muted-foreground">{record.borrow_date.split("T")[0]}</td>
+                    <td className="py-3 text-sm text-muted-foreground">{record.due_date.split("T")[0]}</td>
                     <td className="py-3">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
@@ -96,11 +99,11 @@ export default function BorrowReturn() {
                     </td>
                     <td className="py-3 text-right">
                       <div className="flex justify-end gap-2">
-                        {record.status === "borrowed" ? (
+                        {record.status === "borrowed" && (
                           <Button variant="outline" size="sm" onClick={() => handleReturn(record.borrow_id)}>
                             Return Book
                           </Button>
-                        ) : null}
+                        )}
                         <Button variant="ghost" size="sm" onClick={() => handleDelete(record.borrow_id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>

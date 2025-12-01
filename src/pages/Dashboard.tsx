@@ -1,32 +1,57 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users, ArrowLeftRight, AlertCircle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-
-const stats = [
-  { name: "Total Books", value: "1,234", icon: BookOpen, change: "+12.5%" },
-  { name: "Total Members", value: "456", icon: Users, change: "+8.2%" },
-  { name: "Borrowed Books", value: "89", icon: ArrowLeftRight, change: "-3.1%" },
-  { name: "Overdue", value: "12", icon: AlertCircle, change: "+2.4%" },
-];
-
-const chartData = [
-  { month: "Jan", borrowed: 45, returned: 42 },
-  { month: "Feb", borrowed: 52, returned: 48 },
-  { month: "Mar", borrowed: 48, returned: 51 },
-  { month: "Apr", borrowed: 61, returned: 55 },
-  { month: "May", borrowed: 55, returned: 58 },
-  { month: "Jun", borrowed: 67, returned: 62 },
-];
-
-const recentBorrows = [
-  { id: "BRW001", member: "John Doe", book: "The Great Gatsby", date: "2024-01-15", status: "Borrowed" },
-  { id: "BRW002", member: "Jane Smith", book: "1984", date: "2024-01-14", status: "Borrowed" },
-  { id: "BRW003", member: "Mike Johnson", book: "To Kill a Mockingbird", date: "2024-01-14", status: "Returned" },
-  { id: "BRW004", member: "Sarah Williams", book: "Pride and Prejudice", date: "2024-01-13", status: "Borrowed" },
-  { id: "BRW005", member: "David Brown", book: "The Catcher in the Rye", date: "2024-01-13", status: "Overdue" },
-];
+import { getDashboard, getBorrows } from "@/api/api"; // API calls
 
 export default function Dashboard() {
+  const [stats, setStats] = useState([
+    { name: "Total Books", value: "-", icon: BookOpen, change: "" },
+    { name: "Total Members", value: "-", icon: Users, change: "" },
+    { name: "Borrowed Books", value: "-", icon: ArrowLeftRight, change: "" },
+    { name: "Overdue", value: "-", icon: AlertCircle, change: "" },
+  ]);
+
+  const [recentBorrows, setRecentBorrows] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchDashboard();
+    fetchRecentBorrows();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const data = await getDashboard(); 
+      setStats([
+        { name: "Total Books", value: data.totalBooks, icon: BookOpen, change: "+0%" },
+        { name: "Total Members", value: data.totalMembers, icon: Users, change: "+0%" },
+        { name: "Borrowed Books", value: data.borrowedBooks, icon: ArrowLeftRight, change: "0%" },
+        { name: "Overdue", value: data.overdueBooks, icon: AlertCircle, change: "0%" },
+      ]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchRecentBorrows = async () => {
+    try {
+      const borrows = await getBorrows();
+      setRecentBorrows(borrows.slice(-5).reverse()); // last 5 records
+      // ตัวอย่างสร้าง chart data แบบง่าย: จำนวน borrow/return ต่อเดือน
+      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const chartMap: any = {};
+      borrows.forEach((b) => {
+        const month = new Date(b.borrow_date).getMonth();
+        if (!chartMap[month]) chartMap[month] = { month: months[month], borrowed: 0, returned: 0 };
+        chartMap[month][b.status === "borrowed" ? "borrowed" : "returned"] += 1;
+      });
+      setChartData(Object.values(chartMap));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -43,12 +68,14 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                <span className={stat.change.startsWith("+") ? "text-green-600" : "text-red-600"}>
-                  {stat.change}
-                </span>{" "}
-                from last month
-              </p>
+              {stat.change && (
+                <p className="text-xs text-muted-foreground">
+                  <span className={stat.change.startsWith("+") ? "text-green-600" : "text-red-600"}>
+                    {stat.change}
+                  </span>{" "}
+                  from last month
+                </p>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -96,17 +123,17 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {recentBorrows.map((record) => (
-                  <tr key={record.id} className="border-b border-border last:border-0">
-                    <td className="py-3 text-sm text-foreground">{record.id}</td>
-                    <td className="py-3 text-sm text-foreground">{record.member}</td>
-                    <td className="py-3 text-sm text-foreground">{record.book}</td>
-                    <td className="py-3 text-sm text-muted-foreground">{record.date}</td>
+                  <tr key={record.borrow_id} className="border-b border-border last:border-0">
+                    <td className="py-3 text-sm text-foreground">BRW{String(record.borrow_id).padStart(3, "0")}</td>
+                    <td className="py-3 text-sm text-foreground">{record.member_name}</td>
+                    <td className="py-3 text-sm text-foreground">{record.book_name}</td>
+                    <td className="py-3 text-sm text-muted-foreground">{new Date(record.borrow_date).toLocaleDateString()}</td>
                     <td className="py-3">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                          record.status === "Borrowed"
+                          record.status === "borrowed"
                             ? "bg-accent text-accent-foreground"
-                            : record.status === "Returned"
+                            : record.status === "returned"
                             ? "bg-secondary text-secondary-foreground"
                             : "bg-destructive/10 text-destructive"
                         }`}

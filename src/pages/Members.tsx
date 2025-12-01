@@ -1,77 +1,72 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { MemberModal } from "@/components/modals/MemberModal";
 import { toast } from "sonner";
-
-const mockMembers = [
-  {
-    user_id: 1,
-    name: "John Doe",
-    first_name: "John",
-    last_name: "Doe",
-    email: "john.doe@email.com",
-    phone: "+1-555-0123",
-    borrowlimit: 5,
-    date_registered: "2023-01-15",
-    status: "active",
-  },
-  {
-    user_id: 2,
-    name: "Jane Smith",
-    first_name: "Jane",
-    last_name: "Smith",
-    email: "jane.smith@email.com",
-    phone: "+1-555-0124",
-    borrowlimit: 5,
-    date_registered: "2023-02-20",
-    status: "active",
-  },
-  {
-    user_id: 3,
-    name: "Mike Johnson",
-    first_name: "Mike",
-    last_name: "Johnson",
-    email: "mike.j@email.com",
-    phone: "+1-555-0125",
-    borrowlimit: 3,
-    date_registered: "2023-03-10",
-    status: "inactive",
-  },
-];
+import { getMembers, addMember, updateMember, deleteMember } from "@/api/api";
 
 export default function Members() {
-  const [members, setMembers] = useState(mockMembers);
+  const [members, setMembers] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<typeof mockMembers[0] | null>(null);
+  const [selectedMember, setSelectedMember] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
+  const fetchMembers = async () => {
+    try {
+      const data = await getMembers();
+      setMembers(data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load members");
+    }
+  };
 
   const handleAdd = () => {
     setSelectedMember(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (member: typeof mockMembers[0]) => {
+  const handleEdit = (member: any) => {
     setSelectedMember(member);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (userId: number) => {
-    setMembers(members.filter((m) => m.user_id !== userId));
-    toast.success("Member deleted successfully");
+  const handleDelete = async (userId: number) => {
+    if (!confirm("Are you sure you want to delete this member?")) return;
+    try {
+      await deleteMember(userId);
+      setMembers(members.filter((m) => m.user_id !== userId));
+      toast.success("Member deleted successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete member");
+    }
   };
 
-  const handleSave = (memberData: any) => {
-    if (selectedMember) {
-      setMembers(members.map((m) => (m.user_id === selectedMember.user_id ? { ...memberData, user_id: m.user_id } : m)));
-      toast.success("Member updated successfully");
-    } else {
-      setMembers([...members, { ...memberData, user_id: members.length + 1 }]);
-      toast.success("Member added successfully");
+  const handleSave = async (memberData: any) => {
+    try {
+      if (selectedMember) {
+        // update
+        const updated = await updateMember(selectedMember.user_id, memberData);
+        setMembers(members.map((m) => (m.user_id === selectedMember.user_id ? updated : m)));
+        toast.success("Member updated successfully");
+      } else {
+        // add
+        const newMember = await addMember(memberData);
+        setMembers([...members, newMember]);
+        toast.success("Member added successfully");
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save member");
     }
-    setIsModalOpen(false);
   };
 
   const filteredMembers = members.filter((member) =>
@@ -131,7 +126,7 @@ export default function Members() {
                     <td className="py-3 text-sm text-muted-foreground">{member.email}</td>
                     <td className="py-3 text-sm text-muted-foreground">{member.phone}</td>
                     <td className="py-3 text-sm text-muted-foreground">{member.borrowlimit}</td>
-                    <td className="py-3 text-sm text-muted-foreground">{member.date_registered}</td>
+                    <td className="py-3 text-sm text-muted-foreground">{new Date(member.date_registered).toLocaleDateString()}</td>
                     <td className="py-3">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${

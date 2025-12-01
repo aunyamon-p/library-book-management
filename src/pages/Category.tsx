@@ -1,51 +1,70 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { CategoryModal } from "@/components/modals/CategoryModal";
 import { toast } from "sonner";
-
-const mockCategories = [
-  { category_id: 1, category_name: "Fiction" },
-  { category_id: 2, category_name: "Science Fiction" },
-  { category_id: 3, category_name: "Non-Fiction" },
-  { category_id: 4, category_name: "Biography" },
-  { category_id: 5, category_name: "History" },
-];
+import { getCategories, addCategory, updateCategory, deleteCategory } from "@/api/api";
 
 export default function Category() {
-  const [categories, setCategories] = useState(mockCategories);
+  const [categories, setCategories] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<typeof mockCategories[0] | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
+
+  // โหลด categories จาก API ตอน mount
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const data = await getCategories();
+      setCategories(data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Cannot load categories");
+    }
+  };
 
   const handleAdd = () => {
     setSelectedCategory(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (category: typeof mockCategories[0]) => {
+  const handleEdit = (category: any) => {
     setSelectedCategory(category);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (categoryId: number) => {
-    setCategories(categories.filter((c) => c.category_id !== categoryId));
-    toast.success("Category deleted successfully");
+  const handleDelete = async (categoryId: number) => {
+    try {
+      await deleteCategory(categoryId);
+      setCategories(categories.filter(c => c.category_id !== categoryId));
+      toast.success("Category deleted successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete category");
+    }
   };
 
-  const handleSave = (categoryData: any) => {
-    if (selectedCategory) {
-      setCategories(
-        categories.map((c) =>
-          c.category_id === selectedCategory.category_id ? { ...categoryData, category_id: c.category_id } : c
-        )
-      );
-      toast.success("Category updated successfully");
-    } else {
-      setCategories([...categories, { ...categoryData, category_id: categories.length + 1 }]);
-      toast.success("Category added successfully");
+  const handleSave = async (categoryData: any) => {
+    try {
+      if (selectedCategory) {
+        // Update existing category
+        const updated = await updateCategory(selectedCategory.category_id, categoryData);
+        setCategories(categories.map(c => c.category_id === selectedCategory.category_id ? updated : c));
+        toast.success("Category updated successfully");
+      } else {
+        // Add new category
+        const added = await addCategory(categoryData);
+        setCategories([...categories, added]);
+        toast.success("Category added successfully");
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save category");
     }
-    setIsModalOpen(false);
   };
 
   return (

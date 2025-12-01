@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import { login } from "@/api/api.js"; 
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -13,21 +14,23 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
 
-    // Mock authentication
-    setTimeout(() => {
-      if (username === "admin01" && password === "1234") {
-        toast.success("Login successful!");
-        navigate("/dashboard");
-      } else {
-        toast.error("Invalid username or password");
-      }
-      setIsLoading(false);
-    }, 800);
-  };
+  try {
+    const data = await login(username, password);
+
+    localStorage.setItem("token", data.token);
+
+    toast.success("Login successful!");
+    navigate("/dashboard");
+  } catch (err) {
+    toast.error("Invalid username or password");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

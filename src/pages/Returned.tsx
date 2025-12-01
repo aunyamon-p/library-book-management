@@ -1,34 +1,50 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const mockReturned = [
-  {
-    return_id: 1,
-    user_name: "Jane Smith",
-    book_name: "1984",
-    borrow_date: "2024-01-08",
-    return_date: "2024-01-22",
-    fine: 0,
-    status: "On Time",
-    processed_by: "admin01",
-  },
-  {
-    return_id: 2,
-    user_name: "David Brown",
-    book_name: "Pride and Prejudice",
-    borrow_date: "2023-12-15",
-    return_date: "2024-01-10",
-    fine: 15,
-    status: "Late",
-    processed_by: "admin01",
-  },
-];
+import { getReturnedBooks } from "@/api/api"; // ฟังก์ชัน API จริง
+import { toast } from "sonner";
 
 export default function Returned() {
+  const [returned, setReturned] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadReturned();
+  }, []);
+
+  const loadReturned = async () => {
+    try {
+      const data = await getReturnedBooks();
+
+      const formatted = data.map((r) => ({
+        return_id: r.return_id,
+        user_name: r.user_name || r.member_name || "-",
+        book_name: r.book_name || "-",
+        borrow_date: r.borrow_date,
+        return_date: r.return_date,
+        totalfine: Number(r.totalfine) || 0, // ✅ แปลงเป็น number
+        status: r.status || (Number(r.totalfine) > 0 ? "Late" : "On Time"),
+        processed_by: r.processed_by || r.processed_id || "-",
+      }));
+
+      setReturned(formatted);
+    } catch (err) {
+      console.error(err);
+      toast.error("Cannot load returned books");
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    return d.toISOString().split("T")[0];
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Returned Books</h1>
-        <p className="text-sm text-muted-foreground">View completed book returns and fines</p>
+        <p className="text-sm text-muted-foreground">
+          View completed book returns and fines
+        </p>
       </div>
 
       <Card className="shadow-custom">
@@ -51,14 +67,16 @@ export default function Returned() {
                 </tr>
               </thead>
               <tbody>
-                {mockReturned.map((record) => (
+                {returned.map((record) => (
                   <tr key={record.return_id} className="border-b border-border last:border-0">
-                    <td className="py-3 text-sm text-foreground">RET{String(record.return_id).padStart(3, "0")}</td>
+                    <td className="py-3 text-sm text-foreground">
+                      RET{String(record.return_id).padStart(3, "0")}
+                    </td>
                     <td className="py-3 text-sm font-medium text-foreground">{record.user_name}</td>
                     <td className="py-3 text-sm text-foreground">{record.book_name}</td>
-                    <td className="py-3 text-sm text-muted-foreground">{record.borrow_date}</td>
-                    <td className="py-3 text-sm text-muted-foreground">{record.return_date}</td>
-                    <td className="py-3 text-sm text-foreground">${record.fine.toFixed(2)}</td>
+                    <td className="py-3 text-sm text-muted-foreground">{formatDate(record.borrow_date)}</td>
+                    <td className="py-3 text-sm text-muted-foreground">{formatDate(record.return_date)}</td>
+                    <td className="py-3 text-sm text-foreground">${record.totalfine.toFixed(2)}</td>
                     <td className="py-3">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${

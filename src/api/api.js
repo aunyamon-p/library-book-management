@@ -1,5 +1,9 @@
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "http://localhost:3001";
 
+/**
+ * ฟังก์ชัน fetch wrapper
+ * ส่ง token ไปใน header ถ้ามี
+ */
 async function request(path, options = {}) {
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: {
@@ -16,15 +20,253 @@ async function request(path, options = {}) {
   return res.json();
 }
 
+/** =====================
+ * AUTH
+ * ===================== */
+
+/**
+ * Login admin
+ * @param {string} username
+ * @param {string} password
+ */
 export const login = (username, password) => {
-  return request("/auth/login", {
+  return request("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ username, password }),
   });
 };
 
-export const getBooks = (token) => {
-  return request("/books", {
+/**
+ * Logout (ลบ token)
+ */
+export const logout = () => {
+  localStorage.removeItem("token");
+};
+
+/** =====================
+ * BOOKS
+ * ===================== */
+
+/**
+ * ดึงข้อมูลหนังสือทั้งหมด (ต้อง login)
+ */
+export const getBooks = () => {
+  const token = localStorage.getItem("token");
+  return request("/api/books", { token });
+};
+
+/**
+ * เพิ่มหนังสือใหม่ (ต้อง login)
+ * @param {object} book
+ */
+export const addBook = (book) => {
+  const token = localStorage.getItem("token");
+  return request("/api/books", {
+    method: "POST",
+    token,
+    body: JSON.stringify(book),
+  });
+};
+
+/**
+ * แก้ไขหนังสือ
+ * @param {number} id
+ * @param {object} book
+ */
+export const updateBook = (id, book) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/books/${id}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(book),
+  });
+};
+
+/**
+ * ลบหนังสือ
+ * @param {number} id
+ */
+export const deleteBook = (id) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/books/${id}`, {
+    method: "DELETE",
+    token,
+  });
+};
+
+/** =====================
+ * MEMBERS
+ * ===================== */
+
+export const getMembers = () => {
+  const token = localStorage.getItem("token");
+  return request("/api/members", { token });
+};
+
+export const addMember = (member) => {
+  const token = localStorage.getItem("token");
+  return request("/api/members", {
+    method: "POST",
+    token,
+    body: JSON.stringify(member),
+  });
+};
+
+export const updateMember = (id, member) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/members/${id}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(member),
+  });
+};
+
+export const deleteMember = (id) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/members/${id}`, {
+    method: "DELETE",
+    token,
+  });
+};
+
+/** =====================
+ * ADMINS
+ * ===================== */
+
+export const getAdmins = () => {
+  const token = localStorage.getItem("token");
+  return request("/api/admin", { token });
+};
+
+export const addAdmin = (admin) => {
+  const token = localStorage.getItem("token");
+  return request("/api/admin", {
+    method: "POST",
+    token,
+    body: JSON.stringify(admin),
+  });
+};
+
+export const updateAdmin = (id, admin) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/admin/${id}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(admin),
+  });
+};
+
+export const deleteAdmin = (id) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/admin/${id}`, {
+    method: "DELETE",
+    token,
+  });
+};
+
+/** =====================
+ * BORROW / RETURN
+ * ===================== */
+
+export const getBorrows = () => {
+  const token = localStorage.getItem("token");
+  return request("/api/borrow", { token });
+};
+
+export const addBorrow = (borrow) => {
+  const token = localStorage.getItem("token");
+  return request("/api/borrow", {
+    method: "POST",
+    token,
+    body: JSON.stringify(borrow),
+  });
+};
+
+export const updateBorrow = (id, borrow) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/borrow/${id}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(borrow),
+  });
+};
+
+export const deleteBorrow = (id) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/borrow/${id}`, {
+    method: "DELETE",
+    token,
+  });
+};
+
+/** =====================
+ * DASHBOARD
+ * ===================== */
+
+export const getDashboard = () => {
+  const token = localStorage.getItem("token");
+  return request("/api/dashboard", { token });
+};
+
+/** ===================== CATEGORIES ===================== */
+export const getCategories = () => {
+  const token = localStorage.getItem("token");
+  return request("/api/categories", { token });
+};
+
+export const addCategory = (category) => {
+  const token = localStorage.getItem("token");
+  return request("/api/categories", {
+    method: "POST",
+    token,
+    body: JSON.stringify(category),
+  });
+};
+
+export const updateCategory = (id, category) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/categories/${id}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(category),
+  });
+};
+
+export const deleteCategory = (id) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/categories/${id}`, {
+    method: "DELETE",
+    token,
+  });
+};
+
+export const getReturnedBooks = () => {
+  const token = localStorage.getItem("token");
+  return request("/api/returns", { token });
+};
+
+export const addReturn = (returnData) => {
+  const token = localStorage.getItem("token");
+  return request("/api/returns", {
+    method: "POST",
+    token,
+    body: JSON.stringify(returnData),
+  });
+};
+
+export const updateReturn = (id, returnData) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/returns/${id}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(returnData),
+  });
+};
+
+export const deleteReturn = (id) => {
+  const token = localStorage.getItem("token");
+  return request(`/api/returns/${id}`, {
+    method: "DELETE",
     token,
   });
 };
