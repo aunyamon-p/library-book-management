@@ -1,27 +1,21 @@
 import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getCategories } from "@/api/api";
 
 interface BookModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (book: any) => void;
   book?: any;
+}
+
+interface Category {
+  category_id: number;
+  category_name: string;
 }
 
 export function BookModal({ isOpen, onClose, onSave, book }: BookModalProps) {
@@ -32,14 +26,39 @@ export function BookModal({ isOpen, onClose, onSave, book }: BookModalProps) {
     publisher: "",
     publish_year: new Date().getFullYear(),
     shelf: "",
-    amount: 0,
     status: "available",
-    category_name: "Fiction",
+    category_id: 1,
   });
+
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        if (Array.isArray(data)) setCategories(data);
+        else if (Array.isArray(data.data)) setCategories(data.data);
+        else setCategories([]);
+      } catch (err) {
+        console.error(err);
+        setCategories([]);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (book) {
-      setFormData(book);
+      setFormData({
+        isbn: book.isbn ?? "",
+        book_name: book.book_name ?? "",
+        author: book.author ?? "",
+        publisher: book.publisher ?? "",
+        publish_year: book.publish_year ?? new Date().getFullYear(),
+        shelf: book.shelf ?? "",
+        status: book.status ?? "available",
+        category_id: book.category_id ?? 1,
+      });
     } else {
       setFormData({
         isbn: "",
@@ -48,15 +67,15 @@ export function BookModal({ isOpen, onClose, onSave, book }: BookModalProps) {
         publisher: "",
         publish_year: new Date().getFullYear(),
         shelf: "",
-        amount: 0,
         status: "available",
-        category_name: "Fiction",
+        category_id: 1,
       });
     }
   }, [book, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Defer API calls to the parent so the modal only manages form state.
     onSave(formData);
   };
 
@@ -88,6 +107,7 @@ export function BookModal({ isOpen, onClose, onSave, book }: BookModalProps) {
                 />
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="author">Author</Label>
@@ -108,6 +128,7 @@ export function BookModal({ isOpen, onClose, onSave, book }: BookModalProps) {
                 />
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="publish_year">Publish Year</Label>
@@ -129,34 +150,27 @@ export function BookModal({ isOpen, onClose, onSave, book }: BookModalProps) {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) })}
-                  required
-                />
-              </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
                 <Select
-                  value={formData.category_name}
-                  onValueChange={(value) => setFormData({ ...formData, category_name: value })}
-                >
-                  <SelectTrigger id="category">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Fiction">Fiction</SelectItem>
-                    <SelectItem value="Science Fiction">Science Fiction</SelectItem>
-                    <SelectItem value="Non-Fiction">Non-Fiction</SelectItem>
-                    <SelectItem value="Biography">Biography</SelectItem>
-                  </SelectContent>
-                </Select>
+  value={formData.category_id.toString()}
+  onValueChange={(value) => setFormData({ ...formData, category_id: parseInt(value) })}
+>
+  <SelectTrigger id="category">
+    <SelectValue placeholder="Select category" />
+  </SelectTrigger>
+  <SelectContent>
+    {categories.map((cat) => (
+      <SelectItem key={cat.category_id} value={cat.category_id.toString()}>
+        {cat.category_name}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
@@ -175,10 +189,9 @@ export function BookModal({ isOpen, onClose, onSave, book }: BookModalProps) {
               </div>
             </div>
           </div>
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit">{book ? "Update" : "Add"} Book</Button>
           </DialogFooter>
         </form>

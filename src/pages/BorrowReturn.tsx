@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2 , Plus, AlignLeft } from "lucide-react";
+import { Trash2 , Plus } from "lucide-react";
 import { toast } from "sonner";
-import { getBorrows, deleteBorrow, addBorrow, addReturn, getAdmins } from "@/api/api";
+import { getBorrows, deleteBorrow, addBorrow, addReturn } from "@/api/api";
 import { BorrowModal } from "./../components/modals/BorrowModal";
 
 export default function BorrowReturn() {
@@ -12,11 +12,9 @@ export default function BorrowReturn() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any | null>(null);
-  const [admins, setAdmins] = useState<any[]>([]);
 
   useEffect(() => {
     fetchRecords();
-    fetchAdmins();
   }, []);
 
   const fetchRecords = async () => {
@@ -28,16 +26,12 @@ export default function BorrowReturn() {
     }
   };
 
-  const fetchAdmins = async () => {
-    try {
-      const data = await getAdmins();
-      setAdmins(data);
-    } catch (err) {
-      console.error("Failed to fetch admins", err);
+  const handleReturnBook = async (record: any, book: any) => {
+    const processedBy = record?.processed_by || record?.recorded_by;
+    if (!processedBy) {
+      toast.error("No 'processed by' admin found for this borrow record.");
+      return;
     }
-  };
-
-  const handleReturnBook = async (borrowId: number, book: any) => {
     try {
       const returnDate = new Date();
       const dueDate = new Date(book.due_date);
@@ -52,11 +46,11 @@ export default function BorrowReturn() {
 
       const payload = {
         totalfine: fine,
-        processed_by: 1,
+        processed_by: Number(processedBy),
         items: [
           {
             return_id: 0,
-            borrow_id: borrowId,
+            borrow_id: record.borrow_id,
             book_id: book.book_id,
             return_date: returnDate.toISOString(),
             fine: fine,
@@ -173,7 +167,7 @@ export default function BorrowReturn() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleReturnBook(record.borrow_id, book)}
+                            onClick={() => handleReturnBook(record, book)}
                           >
                             Return Book
                           </Button>

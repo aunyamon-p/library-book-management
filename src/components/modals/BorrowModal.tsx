@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { getMembers, getBooks, getAdmins } from "@/api/api"; // <-- ดึง getAdmins
+import { getMembers, getBooks, getAdmins } from "@/api/api";
 
 interface BorrowModalProps {
   isOpen: boolean;
@@ -25,6 +25,7 @@ export function BorrowModal({ isOpen, onClose, onSave, borrow }: BorrowModalProp
     borrow_date: new Date().toISOString().split("T")[0],
     amount: 1,
     recorded_by: "",
+    processed_by: "",
     books: [
       {
         book_id: "",
@@ -35,15 +36,14 @@ export function BorrowModal({ isOpen, onClose, onSave, borrow }: BorrowModalProp
 
   const [members, setMembers] = useState<any[]>([]);
   const [booksList, setBooksList] = useState<any[]>([]);
-  const [admins, setAdmins] = useState<any[]>([]); // <-- state สำหรับ admin
+  const [admins, setAdmins] = useState<any[]>([]);
 
-  // ดึงสมาชิก, หนังสือ, admin
   useEffect(() => {
     const fetchData = async () => {
       try {
         const mems = await getMembers();
         const books = await getBooks();
-        const adms = await getAdmins(); // <-- ดึง admin
+        const adms = await getAdmins(); 
         setMembers(mems);
         setBooksList(books);
         setAdmins(adms);
@@ -55,19 +55,35 @@ export function BorrowModal({ isOpen, onClose, onSave, borrow }: BorrowModalProp
   }, []);
 
   useEffect(() => {
-    if (borrow) {
-      setFormData({
-        user_id: borrow.user_id,
-        borrow_date: borrow.borrow_date?.split("T")[0],
-        amount: borrow.amount,
-        recorded_by: borrow.recorded_by,
-        books: borrow.books.map((b: any) => ({
-          book_id: b.book_id,
-          due_date: b.due_date.split("T")[0],
-        })),
-      });
-    }
-  }, [borrow]);
+  if (borrow) {
+    setFormData({
+      user_id: borrow.user_id,
+      borrow_date: borrow.borrow_date?.split("T")[0],
+      amount: borrow.amount,
+      recorded_by: borrow.recorded_by,
+      processed_by: borrow.processed_by ?? "",
+      books: borrow.books.map((b: any) => ({
+        book_id: b.book_id,
+        due_date: b.due_date.split("T")[0],
+      })),
+    });
+  } else if (isOpen) {
+    setFormData({
+      user_id: "",
+      borrow_date: new Date().toISOString().split("T")[0],
+      amount: 1,
+      recorded_by: "",
+      processed_by: "",
+      books: [
+        {
+          book_id: "",
+          due_date: new Date().toISOString().split("T")[0],
+        },
+      ],
+    });
+  }
+}, [borrow, isOpen]);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +155,6 @@ export function BorrowModal({ isOpen, onClose, onSave, borrow }: BorrowModalProp
                 ))}
               </SelectContent>
             </Select>
-
             <Label>Borrow Date</Label>
             <Input
               type="date"

@@ -12,50 +12,51 @@ export default function Returned() {
     fetchRecords();
   }, []);
 
-  // ดึง return records จาก backend
   const fetchRecords = async () => {
-    try {
-      const data = await getReturnDetails();
+  try {
+    const data = await getReturnDetails();
 
-      // จัดกลุ่มตาม return_id
-      const grouped = data.reduce((acc: any, item: any) => {
-        if (!acc[item.return_id]) {
-          acc[item.return_id] = {
-            return_id: item.return_id,
-            return_header_date: item.detail_return_date,
-            totalfine: item.totalfine || 0,
-            processed_by: item.processed_by,
-            processed_by_name: item.processed_by_name,
-            details: [],
-          };
-        }
+    const grouped = data.reduce((acc: any, item: any) => {
+      if (!acc[item.return_id]) {
+        acc[item.return_id] = {
+          return_id: item.return_id,
+          return_header_date: item.detail_return_date,
+          totalfine: item.totalfine || 0,
+          processed_by: item.processed_by,
+          processed_by_name: item.processed_by_name || (item.processed_by ? `ID ${item.processed_by}` : "-"),
+          details: [],
+        };
+      }
 
-        acc[item.return_id].details.push({
-          borrow_id: item.borrow_id,
-          book_id: item.book_id,
-          book_name: item.book_name,
-          member_name: item.member_name,
-          status: item.status || "OnTime",
-          fine: item.fine || 0,
-          return_date: item.return_date,
-          due_date: item.due_date,
-        });
+      const retDate = new Date(item.detail_return_date || item.return_date);
+      const dueDate = new Date(item.due_date);
+      const lateDays = Math.max(0, Math.ceil((retDate.getTime() - dueDate.getTime()) / (1000*60*60*24)));
+      const fine = lateDays * 5;
 
-        return acc;
-      }, {} as Record<number, any>);
+      acc[item.return_id].details.push({
+        borrow_id: item.borrow_id,
+        book_id: item.book_id,
+        book_name: item.book_name,
+        member_name: item.member_name,
+        status: lateDays > 0 ? "Late" : "OnTime",
+        fine: fine || 0,
+        return_date: item.return_date,
+        due_date: item.due_date,
+      });
 
-      setRecords(Object.values(grouped));
-    } catch (err) {
-      toast.error("Failed to load return records");
-      console.error(err);
-    }
-  };
+      return acc;
+    }, {} as Record<number, any>);
 
-  // ลบทั้ง return record
+    setRecords(Object.values(grouped));
+  } catch (err) {
+    toast.error("Failed to load return records");
+    console.error(err);
+  }
+};
   const handleDelete = async (returnId: number) => {
     if (!confirm("Are you sure you want to delete this return record?")) return;
     try {
-      await deleteReturn(returnId); // backend ลบ header + details
+      await deleteReturn(returnId);
       toast.success("Return record deleted successfully");
       setRecords(records.filter(r => r.return_id !== returnId));
     } catch (err) {
@@ -79,8 +80,7 @@ export default function Returned() {
             </CardTitle>
             <p className="text-sm text-muted-foreground">
               Return Date: {new Date(record.return_header_date).toLocaleDateString()} | 
-              Processed by: {record.processed_by_name} | 
-              Fine: {record.totalfine}฿
+              Processed by: {record.processed_by_name}
             </p>
           </CardHeader>
 

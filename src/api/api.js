@@ -1,9 +1,6 @@
 const BASE_URL = "http://localhost:3001";
 
-/**
- * ฟังก์ชัน fetch wrapper
- * ส่ง token ไปใน header ถ้ามี
- */
+
 async function request(path, options = {}) {
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: {
@@ -20,15 +17,11 @@ async function request(path, options = {}) {
   return res.json();
 }
 
-/** =====================
- * AUTH
- * ===================== */
-
 /**
- * Login admin
  * @param {string} username
  * @param {string} password
  */
+
 export const login = (username, password) => {
   return request("/api/auth/login", {
     method: "POST",
@@ -36,20 +29,11 @@ export const login = (username, password) => {
   });
 };
 
-/**
- * Logout (ลบ token)
- */
+
 export const logout = () => {
   localStorage.removeItem("token");
 };
 
-/** =====================
- * BOOKS
- * ===================== */
-
-/**
- * ดึงข้อมูลหนังสือทั้งหมด (ต้อง login)
- */
 export const getBooks = () => {
   const token = localStorage.getItem("token");
   return request("/api/books", { token });
@@ -94,10 +78,6 @@ export const deleteBook = (id) => {
   });
 };
 
-/** =====================
- * MEMBERS
- * ===================== */
-
 export const getMembers = () => {
   const token = localStorage.getItem("token");
   return request("/api/members", { token });
@@ -128,10 +108,6 @@ export const deleteMember = (id) => {
     token,
   });
 };
-
-/** =====================
- * ADMINS
- * ===================== */
 
 export const getAdmins = () => {
   const token = localStorage.getItem("token");
@@ -164,10 +140,6 @@ export const deleteAdmin = (id) => {
   });
 };
 
-/** =====================
- * BORROW / RETURN
- * ===================== */
-
 export const getBorrows = () => {
   const token = localStorage.getItem("token");
   return request("/api/borrow", { token });
@@ -199,16 +171,11 @@ export const deleteBorrow = (id) => {
   });
 };
 
-/** =====================
- * DASHBOARD
- * ===================== */
-
 export const getDashboard = () => {
   const token = localStorage.getItem("token");
   return request("/api/dashboard", { token });
 };
 
-/** ===================== CATEGORIES ===================== */
 export const getCategories = () => {
   const token = localStorage.getItem("token");
   return request("/api/categories", { token });
@@ -271,8 +238,6 @@ export const deleteReturn = (id) => {
   });
 };
 
-/** ===================== RETURN DETAILS ===================== */
-
 export const getReturnDetails = () => {
   const token = localStorage.getItem("token");
   return request("/api/return-details", { token });
@@ -301,6 +266,6 @@ export const deleteReturnDetail = (id, book_id) => {
   return request(`/api/return-details/${id}`, {
     method: "DELETE",
     token,
-    body: JSON.stringify({ book_id }), // ส่ง book_id ด้วยถ้า API ต้องการ
+    body: JSON.stringify({ book_id }), 
   });
 };

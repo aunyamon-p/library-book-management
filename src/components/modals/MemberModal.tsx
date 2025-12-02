@@ -25,6 +25,9 @@ interface MemberModalProps {
 }
 
 export function MemberModal({ isOpen, onClose, onSave, member }: MemberModalProps) {
+  const normalizeDate = (value?: string) =>
+    value ? new Date(value).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -32,13 +35,17 @@ export function MemberModal({ isOpen, onClose, onSave, member }: MemberModalProp
     email: "",
     phone: "",
     borrowlimit: 5,
-    date_registered: new Date().toISOString().split("T")[0],
+    date_registered: normalizeDate(),
     status: "active",
   });
 
   useEffect(() => {
     if (member) {
-      setFormData(member);
+      setFormData({
+        ...member,
+        // ensure the date fits the input[type=date] format
+        date_registered: normalizeDate(member.date_registered),
+      });
     } else {
       setFormData({
         first_name: "",
@@ -47,7 +54,7 @@ export function MemberModal({ isOpen, onClose, onSave, member }: MemberModalProp
         email: "",
         phone: "",
         borrowlimit: 5,
-        date_registered: new Date().toISOString().split("T")[0],
+        date_registered: normalizeDate(),
         status: "active",
       });
     }
@@ -127,6 +134,7 @@ export function MemberModal({ isOpen, onClose, onSave, member }: MemberModalProp
                   value={formData.date_registered}
                   onChange={(e) => setFormData({ ...formData, date_registered: e.target.value })}
                   required
+                  disabled
                 />
               </div>
               <div className="space-y-2">
